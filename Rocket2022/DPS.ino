@@ -1,15 +1,19 @@
+// This example gets individual Sensor objects for temperature/pressure!
+
 #include <Adafruit_DPS310.h>
 
 Adafruit_DPS310 dps;
 Adafruit_Sensor *dps_temp = dps.getTemperatureSensor();
 Adafruit_Sensor *dps_pressure = dps.getPressureSensor();
 
+float peak_altitude;
+
 void setup() {
   Serial.begin(115200);
   while (!Serial) delay(10);
 
   Serial.println("DPS310");
-  if (! dps.begin_I2C()) {
+  while (!dps.begin_I2C()) {
     Serial.println("Failed to find DPS");
     while (1) yield();
   }
@@ -21,31 +25,18 @@ void setup() {
 
   dps_temp->printSensorDetails();
   dps_pressure->printSensorDetails();
-}
 
-double get_covariance(double data[]) {
-    int length = len(data);
-    double x_mean = length * (length + 1) / 2.0;
-    double y_mean = 0.0;
-    double co_mean = 0.0;
-    for (int i = 0; i < length; ++i) {
-        y_mean += data[i];
-        co_mean += (data[i] * (i + 1));
-    }
-    y_mean /= length;
-    co_mean /= length;
-
-    return co_mean - y_mean * x_mean;
+  peak_altitude = 0.0;
 
 }
 
-double KALMAN(double U) {
-    static const double R = -2470728.387568969; // noise covariance
-    static const double H = 1.0; // measurement map scalar
-    static double Q = -2000000.0; // initial estimated covariance
-    static double P = 0; // inital error covariance (must be 0)
-    static double U_hat = 0; // inital estimated state (assume we don't know)
-    static double K = 0; // inital Kalman gain
+float KALMAN(float U) {
+    static const float R = 40; // noise covariance (has to be calibrated)
+    static const float H = 1.0; // measurement map scalar
+    static float Q = 10; // initial estimated covariance
+    static float P = 0; // inital error covariance (must be 0)
+    static float U_hat = 0; // inital estimated state (assume we don't know)
+    static float K = 0; // inital Kalman gain
 
     // begin
     K = P * H / (H * P * H + R);
@@ -55,6 +46,11 @@ double KALMAN(double U) {
     P = (1 - K * H) * P + Q;
 
     return U_hat;
+}
+
+void launchChute() {
+  Serial.println("PARACHUTE IS LAUNCHED!");
+  // code to launch the chute is to be added
 }
 
 void loop() {
@@ -75,7 +71,19 @@ void loop() {
     Serial.print(F("Pressure = "));
     Serial.print(pressure_event.pressure);
     Serial.println(" hPa"); 
-  
     Serial.println();
+    Serial.print(F("Altitude (Filtered) = "));
+    float altitude = KALMAN(dps.readAltitude(1013.25));
+    Serial.print(altitude);
+    Serial.println(" m");
+    Serial.println();
+
+    if (altitude > peak_altitude) {
+      peak_altitude = altitude;
+    } else if ((peak_altitude - altitude) >= 1.0) {
+      // 1.0 is for testing; it is actually 20.0
+      launchChute();
+    }
+
   }
 }
