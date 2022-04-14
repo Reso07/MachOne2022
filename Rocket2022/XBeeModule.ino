@@ -35,13 +35,3 @@ int ReadByte(CString PortSpecifier)
  serial.println(RetVal);
  return retVal;
 }
-
-void setup() {
-  // put your setup code here, to run once:
-  String xbee_port = 0; //assign the port here
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  ReadByte(xbee_port)
-}

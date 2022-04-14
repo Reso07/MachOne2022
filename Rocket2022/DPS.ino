@@ -8,8 +8,8 @@ Adafruit_Sensor *dps_pressure = dps.getPressureSensor();
 
 float peak_altitude;
 
-void setup() {
-  Serial.begin(115200);
+void dps_init() {
+  // Serial.begin(115200);
   while (!Serial) delay(10);
 
   Serial.println("DPS310");
@@ -53,7 +53,7 @@ void launchChute() {
   // code to launch the chute is to be added
 }
 
-void loop() {
+void dps_execute() {
   sensors_event_t temp_event, pressure_event;
   
   if (dps.temperatureAvailable()) {

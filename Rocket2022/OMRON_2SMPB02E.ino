@@ -3,14 +3,14 @@
 Omron2SMPB02E prs;
 // Omron2SMPB02E prs(0); // in case of SDO=0 configuration
 
-void setup() {
+void omron_init() {
   prs.begin();
-  Serial.begin(9600);
+  // Serial.begin(9600);
   prs.set_mode(MODE_NORMAL);
   delay(300);
 }
 
-void loop() {
+void omron_execute() {
   float tmp = prs.read_temp();
   Serial.println("temperature [degC]");
   Serial.println(tmp);
